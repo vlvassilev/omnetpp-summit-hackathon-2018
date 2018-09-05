@@ -1,0 +1,59 @@
+module traffic-generator {
+
+  yang-version 1.1;
+
+  namespace
+    "urn:omnetpp:summit:2018:xml:ns:yang:traffic-generator";
+
+  prefix tg;
+
+  import ietf-yang-types {
+    prefix yang;
+  }
+
+  organization
+    "OMNeT++ Summit 2018";
+
+  contact
+    "Stefan Zimmermann <mailto:szimmermann@advaoptical.com>
+     Vladimir Vassilev <mailto:vladimir@transpacket.com>";
+
+  description
+    "Module for configuring ethernet traffic generators";
+
+  revision 2018-09-05 {
+    description
+      "Initial" ;
+    reference
+      "First day of OMNeT++ Summit 2018";
+  }
+
+  grouping traffic {
+    description
+      "Definition of ethernet traffic to generate";
+
+    leaf frame-size {
+      type uint16;
+      description
+        "Size of ethernet frames in octets";
+    }
+    
+    leaf interframe-gap {
+      type uint16;
+      description
+        "Number of octets to wait between ethernet frames";
+    }
+
+    leaf src-address {
+      type yang:mac-address;
+      description
+        "Source MAC address in ethernet frame headers";
+    }
+
+    leaf dst-address {
+      type yang:mac-address;
+      description
+        "Destination MAC address in ethernet frame headers";
+    }
+  }
+}
