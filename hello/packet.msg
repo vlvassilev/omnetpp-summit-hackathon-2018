@@ -1,0 +1,3 @@
+packet Packet {
+    string data;
+}
