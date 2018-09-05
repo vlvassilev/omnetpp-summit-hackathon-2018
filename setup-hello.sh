@@ -20,5 +20,26 @@ cd ~/omnetpp-summit-hackathon-2018/hello/
 make
 ./hello -u Cmdenv -G
 
-#omnetpp
+# Download and build INET 3.6.4
+cd
+git clone --branch v3.6.4 --recursive https://github.com/inet-framework/inet.git
+cd inet
+make makefiles
+make
+# Run an example simulation of INET4, with an ordinary ethernet switch
+cd examples/ethernet/lans/
+./run duplexswitch.ini -c SwitchedDuplexLAN -u Cmdenv # delete the "-u Cmdenv" part for the graphical interface
 
+# Download and build NeSTiNg
+cd
+git clone https://gitlab.com/ipvs/nesting.git
+cd nesting
+make makefiles
+make
+# Run an example simulation of NeSTiNg
+cd simulations
+./runsim example.ini                # run simulation without graphical interface (release)
+# ./runsim-qt example.ini                # simulation with the Qt interface (release)
+
+
+#omnetpp
