@@ -16,13 +16,13 @@ USERIF_LIBS = $(ALL_ENV_LIBS) # that is, $(TKENV_LIBS) $(QTENV_LIBS) $(CMDENV_LI
 #USERIF_LIBS = $(QTENV_LIBS)
 
 # C++ include paths (with -I)
-INCLUDE_PATH = -I.
+INCLUDE_PATH = -I. -I./libtraffic
 
 # Additional object and library files to link with
 EXTRA_OBJS =
 
-# Additional libraries (-L, -l options)
-LIBS =-ltraffic
+# Additional libraries (-L, -l options) e.g. -ltraffic
+LIBS =
 
 # Output directory
 PROJECT_OUTPUT_DIR = out
@@ -37,7 +37,9 @@ OBJS = \
     $O/traffic_analyzer.o \
     $O/traffic_generator.o \
     $O/txc1.o \
-    $O/packet_m.o
+    $O/packet_m.o \
+    $O/libtraffic_generator.o
+
 
 # Message files
 MSGFILES = \
