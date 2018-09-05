@@ -1,3 +1,5 @@
+package hello;
+
 simple Txc1
 {
     gates:
