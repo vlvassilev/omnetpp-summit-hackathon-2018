@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<config xmlns="urn:ietf:params:xml:ns:netconf:base:1.0">
+  <nacm xmlns="urn:ietf:params:xml:ns:yang:ietf-netconf-acm">
+  </nacm>
+  <traffic-generator xmlns="urn:omnetpp:summit:2018:xml:ns:yang:traffic-generator">
+    <frame-size>1514</frame-size>
+    <interframe-gap>12</interframe-gap>
+    <src-address>00:00:00:00:00:00</src-address>
+    <dst-address>00:00:00:00:00:02</dst-address>
+  </traffic-generator>
+</config>
