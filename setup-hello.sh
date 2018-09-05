@@ -1,9 +1,9 @@
 #!/bin/bash -e
 #Assuming ~/omnetpp-summit-hackathon-2018 repo directory and ~/omnetpp-5.3-src-linux.tgz are in home directory 
 cd
-tar -xzvf omnetpp-5.3-src-linux.tgz
+tar -xzvf omnetpp-5.3-src-linux.tgz # if the OMNeT++ IDE is not needed at all, the "core" release can also be used instead of the "linux" one - it's a smaller archive
 cd omnetpp-5.3
-apt-get -y install build-essential gcc g++ bison flex perl qt5-default tcl-dev tk-dev libxml2-dev zlib1g-dev default-jre doxygen graphviz libwebkitgtk-3.0-0
+apt-get -y install build-essential gcc g++ bison flex perl qt5-default tcl-dev tk-dev libxml2-dev zlib1g-dev default-jre doxygen graphviz libwebkitgtk-3.0-0 # the default-jre doxygen graphviz libwebkitgtk-3.0-0 packages are not needed for the "core" release, only for the IDE
 apt-get -y install libopenscenegraph-dev openscenegraph-plugin-osgearth libosgearth-dev
 apt-get -y install openmpi-bin libopenmpi-dev
 apt-get -y install openscenegraph libopenscenegraph-dev openscenegraph-plugin-osgearth libosgearth-dev
