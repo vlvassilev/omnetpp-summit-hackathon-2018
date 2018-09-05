@@ -4,7 +4,7 @@
 #include <stdint.h>
 extern "C"
 {
-#include <libtraffic.h>
+#include "libtraffic.h"
 }
 
 #include "packet_m.h"
