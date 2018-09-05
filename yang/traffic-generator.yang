@@ -30,7 +30,7 @@ module traffic-generator {
 
   grouping traffic {
     description
-      "Definition of ethernet traffic to generate";
+      "Definition of ethernet traffic";
 
     leaf frame-size {
       type uint16;
@@ -55,5 +55,12 @@ module traffic-generator {
       description
         "Destination MAC address in ethernet frame headers";
     }
+  }
+
+  container traffic-generator {
+    description
+      "Configuration of ethernet traffic to generate";
+    
+    uses traffic;
   }
 }
