@@ -6,7 +6,7 @@ import ned.DatarateChannel;
 import src.ExampleHost;
 
 
-network ExampleNetwork
+network ExampleNetwork_manual
 {
     @display("bgb=437,271");
     types:
