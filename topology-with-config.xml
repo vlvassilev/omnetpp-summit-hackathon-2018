@@ -86,7 +86,7 @@
         </source>
         <destination>
           <dest-node>br0</dest-node>
-          <dest-tp>p0</dest-tp>
+          <dest-tp>p1</dest-tp>
         </destination>
         <link-id>host1.p0-br0.p1</link-id>
       </link>
