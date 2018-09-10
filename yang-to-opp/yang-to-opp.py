@@ -145,6 +145,7 @@ def id_to_type(id):
 # TODO: deduplicate types for identical nodes?
 def generate_node_type(node_data, ned_file):
     print("module {}\n{{".format(id_to_type(node_data.id)), file=ned_file)
+    print("    @networkNode;", file=ned_file)
     print("    gates:", file=ned_file)
 
     for tp_id, tp in node_data.termination_points.items():
@@ -155,10 +156,16 @@ def generate_node_type(node_data, ned_file):
     for tp_id, tp in node_data.termination_points.items():
         print("        eth_{}: {};".format(id_to_name(tp.id), "EthernetInterface"), file=ned_file)
 
+        # FIXME: dummy app just to have full connectivity
+        print("        app_{}: {};".format(id_to_name(tp.id), "EtherAppCli"), file=ned_file)
+
     print("    connections:", file=ned_file)
 
     for tp_id, tp in node_data.termination_points.items():
         print("        {} <--> eth_{}.phys;".format(id_to_name(tp.id), id_to_name(tp.id)), file=ned_file)
+
+        print("        eth_{}.upperLayerOut --> app_{}.in;".format(id_to_name(tp.id), id_to_name(tp.id)), file=ned_file)
+        print("        eth_{}.upperLayerIn <-- app_{}.out;".format(id_to_name(tp.id), id_to_name(tp.id)), file=ned_file)
 
 
     print("}", file=ned_file)
@@ -169,6 +176,7 @@ def generate_network_ned(network_data, ned_file_name):
     with open(ned_file_name, "wt") as of:
         print("package simulations;", file=of)
         print("", file=of)
+        print("import inet.applications.ethernet.EtherAppCli;", file=of)
         print("import inet.linklayer.ethernet.EthernetInterface;", file=of)
 
         print("""
