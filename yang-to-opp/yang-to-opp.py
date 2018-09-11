@@ -143,7 +143,7 @@ def id_to_type(id):
 
 
 # TODO: deduplicate types for identical nodes?
-def generate_node_type(node_data, ned_file):
+def generate_node_type(node_data, ned_file, ethernet_datarate):
     print("module {}\n{{".format(id_to_type(node_data.id)), file=ned_file)
     print("    @networkNode;", file=ned_file)
     print("    gates:", file=ned_file)
@@ -153,11 +153,22 @@ def generate_node_type(node_data, ned_file):
 
     print("    submodules:", file=ned_file)
 
+    traf_gen = node_data.traffic_generators[0] if node_data.traffic_generators else None
+
     for tp_id, tp in node_data.termination_points.items():
         print("        eth_{}: {};".format(id_to_name(tp.id), "EthernetInterface"), file=ned_file)
 
-        # FIXME: dummy app just to have full connectivity
-        print("        app_{}: {};".format(id_to_name(tp.id), "EtherAppCli"), file=ned_file)
+        print("        app_{}: {} {{".format(id_to_name(tp.id), "EtherTrafGen"), file=ned_file)
+        if traf_gen:
+            print("            // the EtherTrafGen application takes the payload size as parameter, so subtracting the header size", file=ned_file)
+            print("            packetLength = {}B - 14B;".format(traf_gen.frame_size), file=ned_file)
+            print("            // computing the frame sending time interval based on frame length, interframe gap, and transmission rate. also accounting for the preamble, the SFD, and the FCS", file=ned_file)
+            print("            sendInterval = s((7 + 1 + {} + 4 + {})*8 / ({} * 1e6));".format(traf_gen.frame_size, traf_gen.interframe_gap, ethernet_datarate), file=ned_file)
+            print("            destAddress = \"{}\";".format(traf_gen.dst_address), file=ned_file)
+        else:
+            print("            packetLength = 0B;", file=ned_file)
+            print("            sendInterval = 0s;", file=ned_file)
+        print("        }", file=ned_file)
 
     print("    connections:", file=ned_file)
 
@@ -173,25 +184,29 @@ def generate_node_type(node_data, ned_file):
 
 
 def generate_network_ned(network_data, ned_file_name):
+
+    ethernet_datarate = 1000 # in Mbps
+
     with open(ned_file_name, "wt") as of:
-        print("package simulations;", file=of)
+        print("package yang_to_opp;", file=of)
         print("", file=of)
-        print("import inet.applications.ethernet.EtherAppCli;", file=of)
+        print("import inet.applications.ethernet.EtherTrafGen;", file=of)
         print("import inet.linklayer.ethernet.EthernetInterface;", file=of)
 
-        print("""
-channel EthernetChannel extends ned.DatarateChannel
-{
-    parameters:
-        delay = 0us;
-        datarate = 1Gbps;
-}
-""", file=of)
-
         for node_id, node in network_data.nodes.items():
-            generate_node_type(node, of)
+            generate_node_type(node, of, ethernet_datarate)
 
         print("network {}\n{{".format(id_to_type(network_data.id)), file=of)
+        print("    types:",file=of)
+
+        print("""        channel EthernetChannel extends ned.DatarateChannel
+        {{
+            parameters:
+                delay = 0us;
+                datarate = {}Mbps;
+        }}""".format(ethernet_datarate), file=of)
+
+
         print("    submodules:", file=of)
 
         for node_id, node in network_data.nodes.items():
