@@ -1,9 +1,9 @@
-package simulations;
+package yang_to_opp;
 
 
 import inet.node.ethernet.EtherSwitch;
 import ned.DatarateChannel;
-import src.ExampleHost;
+import yang_to_opp.ExampleHost;
 
 
 network ExampleNetwork_manual

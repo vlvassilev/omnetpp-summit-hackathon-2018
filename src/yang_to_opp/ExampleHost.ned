@@ -1,4 +1,4 @@
-package src;
+package yang_to_opp;
 
 import inet.applications.ethernet.EtherAppCli;
 import inet.applications.ethernet.EtherAppSrv;
