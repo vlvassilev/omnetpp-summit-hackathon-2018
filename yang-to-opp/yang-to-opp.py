@@ -143,7 +143,7 @@ def id_to_type(id):
 
 
 # TODO: deduplicate types for identical nodes?
-def generate_node_type(node_data, ned_file, ethernet_datarate):
+def generate_host_type(node_data, ned_file, ethernet_datarate):
     print("module {}\n{{".format(id_to_type(node_data.id)), file=ned_file)
     print("    @networkNode;", file=ned_file)
     print("    gates:", file=ned_file)
@@ -156,9 +156,10 @@ def generate_node_type(node_data, ned_file, ethernet_datarate):
     traf_gen = node_data.traffic_generators[0] if node_data.traffic_generators else None
 
     for tp_id, tp in node_data.termination_points.items():
-        print("        eth_{}: {};".format(id_to_name(tp.id), "EthernetInterface"), file=ned_file)
+        print("        eth_{}: {} {{ @display(\"p=100,200\"); }};".format(id_to_name(tp.id), "EthernetInterface"), file=ned_file)
 
         print("        app_{}: {} {{".format(id_to_name(tp.id), "EtherTrafGen"), file=ned_file)
+        print("            @display(\"p=100,100\");", file=ned_file)
         if traf_gen:
             print("            // the EtherTrafGen application takes the payload size as parameter, so subtracting the header size", file=ned_file)
             print("            packetLength = {}B - 14B;".format(traf_gen.frame_size), file=ned_file)
@@ -173,10 +174,71 @@ def generate_node_type(node_data, ned_file, ethernet_datarate):
     print("    connections:", file=ned_file)
 
     for tp_id, tp in node_data.termination_points.items():
-        print("        {} <--> eth_{}.phys;".format(id_to_name(tp.id), id_to_name(tp.id)), file=ned_file)
+        print("        {} <--> {{ @display(\"m=s\"); }} <--> eth_{}.phys;".format(id_to_name(tp.id), id_to_name(tp.id)), file=ned_file)
 
         print("        eth_{}.upperLayerOut --> app_{}.in;".format(id_to_name(tp.id), id_to_name(tp.id)), file=ned_file)
         print("        eth_{}.upperLayerIn <-- app_{}.out;".format(id_to_name(tp.id), id_to_name(tp.id)), file=ned_file)
+
+
+    print("}", file=ned_file)
+    print("", file=ned_file)
+
+
+# TODO: deduplicate types for identical nodes?
+def generate_switch_type(node_data, ned_file, ethernet_datarate):
+    print("module {}\n{{".format(id_to_type(node_data.id)), file=ned_file)
+    print("    parameters:", file=ned_file)
+    print("        @networkNode;", file=ned_file)
+    print("        @display(\"i=device/switch;bgb={},400\");".format(len(node_data.termination_points)*100 + 300), file=ned_file)
+    print("        **.interfaceTableModule = default(\"\");", file=ned_file)
+
+    print("    gates:", file=ned_file)
+
+    for tp_id, tp in node_data.termination_points.items():
+        print("        inout {};".format(id_to_name(tp.id)), file=ned_file)
+
+    print("    submodules:", file=ned_file)
+
+
+    print("""
+        relayUnit: <default("ForwardingRelayUnit")> like RelayUnit {{
+            @display("p=400,100");
+            numberOfPorts = {};
+        }}
+        clock: <default("IdealClock")> like IClock {{ @display("p=50,50"); }};
+        interfaceTable: InterfaceTable {{ @display("p=150,50");}};
+        filteringDatabase: FilteringDatabase {{ @display("p=50,150");}};
+        scheduleSwap: ScheduleSwap {{ @display("p=150,150");}};
+""".format(len(node_data.termination_points)), file=ned_file)
+
+    for i, (tp_id, tp) in enumerate(node_data.termination_points.items()):
+        tp_name = id_to_name(tp.id)
+
+        # TODO: group all of this into a "port" compound module?
+        print("""
+        queuing_{tp_name}: Queuing {{
+            @display("p={x1},200");
+            tsAlgorithms[*].macModule = "^.^.lowerLayer_{tp_name}.mac";
+            gateController.macModule = "^.^.lowerLayer_{tp_name}.mac";
+        }}
+        lowerLayer_{tp_name}: LowerLayer {{
+            @display("p={x2},300");
+            mac.queueModule = "^.^.queuing_{tp_name}.transmissionSelection";
+            mac.mtu = 1500B;
+        }}
+""".format(x1=275 + i*100, x2=300 + i*100, tp_name=tp_name), file=ned_file)
+
+    print("    connections:", file=ned_file)
+
+    for i, (tp_id, tp) in enumerate(node_data.termination_points.items()):
+        tp_name = id_to_name(tp.id)
+        print("""
+            lowerLayer_{tp_name}.phys <--> {{ @display("m=s"); }} <--> {tp_name};
+            lowerLayer_{tp_name}.upperLayerOut --> relayUnit.in[{i}];
+            relayUnit.out[{i}] --> queuing_{tp_name}.in;
+            queuing_{tp_name}.eOut --> lowerLayer_{tp_name}.upperLayerEIn;
+            queuing_{tp_name}.pOut --> lowerLayer_{tp_name}.upperLayerPIn;
+""".format(i=i, tp_name=tp_name), file=ned_file)
 
 
     print("}", file=ned_file)
@@ -190,11 +252,25 @@ def generate_network_ned(network_data, ned_file_name):
     with open(ned_file_name, "wt") as of:
         print("package yang_to_opp;", file=of)
         print("", file=of)
-        print("import inet.applications.ethernet.EtherTrafGen;", file=of)
-        print("import inet.linklayer.ethernet.EthernetInterface;", file=of)
+        print("""import inet.applications.ethernet.EtherTrafGen;
+import inet.linklayer.ethernet.EthernetInterface;
+
+import inet.common.queue.Delayer;
+import inet.networklayer.common.InterfaceTable;
+import nesting.ieee8021q.clock.IClock;
+import nesting.ieee8021q.queue.Queuing;
+import nesting.ieee8021q.queue.gating.ScheduleSwap;
+import nesting.ieee8021q.relay.FilteringDatabase;
+import nesting.ieee8021q.relay.RelayUnit;
+import nesting.linklayer.LowerLayer;
+""", file=of)
 
         for node_id, node in network_data.nodes.items():
-            generate_node_type(node, of, ethernet_datarate)
+            # TODO: how do we differentiate switches and hosts? do we want to, at all?
+            if len(node.termination_points) > 1:
+                generate_switch_type(node, of, ethernet_datarate)
+            else:
+                generate_host_type(node, of, ethernet_datarate)
 
         print("network {}\n{{".format(id_to_type(network_data.id)), file=of)
         print("    types:",file=of)
@@ -216,7 +292,7 @@ def generate_network_ned(network_data, ned_file_name):
         print("    connections:", file=of)
 
         for link_id, link in network_data.links.items():
-            print("        {}.{} <--> EthernetChannel {{ @display(\"t={}\"); }} <--> {}.{};".format(
+            print("        {}.{} <--> EthernetChannel {{ @display(\"t={},l\"); }} <--> {}.{};".format(
                 link.source_node, link.source_tp, link_id, link.dest_node, link.dest_tp), file=of)
 
         print("}", file=of)
