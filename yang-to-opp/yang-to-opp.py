@@ -53,8 +53,8 @@ def parse_network_xml(xml_file_name):
 
     tree = lxml.etree.parse(xml_file_name)
 
-    network = tree.xpath(
-        '/nc:config/nd:networks[1]/nd:network', namespaces=namespaces)[0]
+    toplevel = tree.xpath('(/nc:config | /nc:data)', namespaces=namespaces)[0]
+    network = toplevel.xpath('nd:networks[1]/nd:network', namespaces=namespaces)[0]
 
     network_id = network.xpath(
         "nd:network-id/text()", namespaces=namespaces)[0]
