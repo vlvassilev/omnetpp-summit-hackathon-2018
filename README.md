@@ -35,14 +35,45 @@ GOALS:
 * Dependency {topology.xml,config-br0.xml,config-host0.xml,config-host1.xml,config-host2.xml} -> topology-with-config.xml
 
 
-## Editing configs: e.g. config-host0.xml
+## Editing config config-host0.xml
 ```
 shell> echo "<config/>" > config-host0.xml
-shell> rm /tmp/ncxserver.sock ; gdb --args /usr/sbin/netconfd  --module=/usr/share/yuma/modules/ietf/ietf-network-topology@2018-02-26.yang --module=yang/tntapi-netconf-node.yang  --module=yang/traffic-generator.yang --log-level=debug4 --startup=config-host0.xml
-```
+shell> rm /tmp/ncxserver.sock ; gdb --args /usr/sbin/netconfd  \
+--module=/usr/share/yuma/modules/ietf/ietf-network-topology@2018-02-26.yang \
+--module=yang/tntapi-netconf-node.yang  \
+--module=yang/traffic-generator.yang \
+--module=/usr/share/yuma/modules/ietf/ietf-interfaces@2014-05-08.yang \
+--module=/usr/share/yuma/modules/ietf/iana-if-type@2014-05-08.yang \
+--module=/usr/share/yuma/modules/ietf-draft/ietf-network-bridge.yang \
+--module=/usr/share/yuma/modules/ietf-draft/ietf-network-bridge-flows.yang \
+--module=/usr/share/yuma/modules/ietf-draft/ietf-network-bridge-scheduler.yang \
+--log-level=debug4 \
+--superuser=${USER} \
+--startup=config-host0.xml
 ```
 yangcli> create /traffic-generator -- dst-address=00:00:00:00:00:02 src-address=00:00:00:00:00:00 frame-size=1514 interframe-gap=12
 yangcli> commit
+```
+
+## Editing br0 config in yangcli (change config-host0.xml to config-br0.xml when starting the netconfd server)
+
+```
+create /bridge/ports/port -- name=p0
+create /bridge/ports/port -- name=p1
+create /bridge/ports/port -- name=p2
+create /interfaces/interface -- name=p0 type=ethernetCsmacd port-name=p0
+create /interfaces/interface -- name=p1 type=ethernetCsmacd port-name=p1
+create /interfaces/interface -- name=p2 type=ethernetCsmacd port-name=p2
+create /flows/flow[id='p0-to-p1'] -- match/ethernet-match/ethernet-source/address=00:00:00:00:00:00 match/ethernet-match/ethernet-destination/address=00:00:00:00:00:01 match/in-port=p0 actions/action[order='0']/output-action/out-port=p1
+create /flows/flow[id='p0-to-p2'] -- match/ethernet-match/ethernet-source/address=00:00:00:00:00:00 match/ethernet-match/ethernet-destination/address=00:00:00:00:00:02 match/in-port=p0 actions/action[order='0']/output-action/out-port=p2
+create /flows/flow[id='p1-to-p0'] -- match/ethernet-match/ethernet-source/address=00:00:00:00:00:01 match/ethernet-match/ethernet-destination/address=00:00:00:00:00:00 match/in-port=p1 actions/action[order='0']/output-action/out-port=p0
+create /flows/flow[id='p1-to-p2'] -- match/ethernet-match/ethernet-source/address=00:00:00:00:00:01 match/ethernet-match/ethernet-destination/address=00:00:00:00:00:02 match/in-port=p1 actions/action[order='0']/output-action/out-port=p2
+create /flows/flow[id='p2-to-p0'] -- match/ethernet-match/ethernet-source/address=00:00:00:00:00:02 match/ethernet-match/ethernet-destination/address=00:00:00:00:00:00 match/in-port=p2 actions/action[order='0']/output-action/out-port=p0
+create /flows/flow[id='p2-to-p1'] -- match/ethernet-match/ethernet-source/address=00:00:00:00:00:02 match/ethernet-match/ethernet-destination/address=00:00:00:00:00:01 match/in-port=p2 actions/action[order='0']/output-action/out-port=p1
+create /flows/flow[id='unmatched-from-p0'] -- match/in-port=p0 actions/action[order='0']/output-action/out-port=p1 actions/action[order='1']/output-action/out-port=p2
+create /flows/flow[id='unmatched-from-p1'] -- match/in-port=p1 actions/action[order='0']/output-action/out-port=p0 actions/action[order='1']/output-action/out-port=p2
+create /flows/flow[id='unmatched-from-p2'] -- match/in-port=p2 actions/action[order='0']/output-action/out-port=p0 actions/action[order='1']/output-action/out-port=p1
+commit
 ```
 
 #Simulating (TODO):
