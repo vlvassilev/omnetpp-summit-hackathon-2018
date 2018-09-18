@@ -32,6 +32,17 @@
           <server>10.0.0.10</server>
           <ncport>830</ncport>
         </netconf-connect-params>
+        <config xmlns="urn:tntapi:netconf-node">
+          <nacm xmlns="urn:ietf:params:xml:ns:yang:ietf-netconf-acm">
+          </nacm>
+          <traffic-generator xmlns="urn:omnetpp:summit:2018:xml:ns:yang:traffic-generator">
+            <frame-size>1514</frame-size>
+            <interframe-gap>12</interframe-gap>
+            <src-address>00:00:00:00:00:00</src-address>
+            <dst-address>00:00:00:00:00:02</dst-address>
+          </traffic-generator>
+        </config>
+
       </node>
       <node>
         <node-id>host1</node-id>
@@ -75,7 +86,7 @@
         </source>
         <destination>
           <dest-node>br0</dest-node>
-          <dest-tp>p1</dest-tp>
+          <dest-tp>p0</dest-tp>
         </destination>
         <link-id>host1.p0-br0.p1</link-id>
       </link>
