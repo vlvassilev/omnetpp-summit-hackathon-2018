@@ -17,7 +17,20 @@ module Br0
     parameters:
         @networkNode;
         @display("i=device/switch;bgb=600,400");
+
         **.interfaceTableModule = default("");
+        filteringDatabase.database = xml(" \
+            <filteringDatabases><filteringDatabase id=\"br0\"> \
+                <static><forward> \
+                    <individualAddress macAddress=\"00:00:00:00:00:01\" port=\"1\" /> \
+                    <individualAddress macAddress=\"00:00:00:00:00:02\" port=\"2\" /> \
+                    <individualAddress macAddress=\"00:00:00:00:00:00\" port=\"0\" /> \
+                    <individualAddress macAddress=\"00:00:00:00:00:02\" port=\"2\" /> \
+                    <individualAddress macAddress=\"00:00:00:00:00:00\" port=\"0\" /> \
+                    <individualAddress macAddress=\"00:00:00:00:00:01\" port=\"1\" /> \
+                </forward></static> \
+            </filteringDatabase></filteringDatabases>");
+
     gates:
         inout p0;
         inout p1;
@@ -95,7 +108,10 @@ module Br0
 
 module Host0
 {
-    @networkNode;
+    parameters:
+        @networkNode;
+        **.interfaceTableModule = default("");
+        eth_p0.mac.address = "00:00:00:00:00:00";
     gates:
         inout p0;
     submodules:
@@ -116,7 +132,10 @@ module Host0
 
 module Host1
 {
-    @networkNode;
+    parameters:
+        @networkNode;
+        **.interfaceTableModule = default("");
+        eth_p0.mac.address = "00:00:00:00:00:01";
     gates:
         inout p0;
     submodules:
@@ -134,7 +153,10 @@ module Host1
 
 module Host2
 {
-    @networkNode;
+    parameters:
+        @networkNode;
+        **.interfaceTableModule = default("");
+        eth_p0.mac.address = "00:00:00:00:00:02";
     gates:
         inout p0;
     submodules:
