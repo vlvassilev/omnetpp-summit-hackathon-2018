@@ -1,5 +1,15 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <config xmlns="urn:ietf:params:xml:ns:netconf:base:1.0">
+  <interfaces xmlns="urn:ietf:params:xml:ns:yang:ietf-interfaces">
+    <interface>
+      <name>p0</name>
+      <type
+        xmlns:ianaift="urn:ietf:params:xml:ns:yang:iana-if-type">ianaift:ethernetCsmacd</type>
+      <ethernet-like xmlns="urn:ietf:params:xml:ns:yang:ietf-interfaces-ethernet-like">
+        <mac-address>00:00:00:00:00:00</mac-address>
+      </ethernet-like>
+    </interface>
+  </interfaces>
   <nacm xmlns="urn:ietf:params:xml:ns:yang:ietf-netconf-acm">
   </nacm>
   <traffic-generator xmlns="urn:omnetpp:summit:2018:xml:ns:yang:traffic-generator">
