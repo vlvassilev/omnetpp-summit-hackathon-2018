@@ -10,18 +10,22 @@ class Network:
         self.nodes = {}
         self.links = {}
 
-
 class Node:
     def __init__(self, id):
         self.id = id
         self.termination_points = {}
+        self.interfaces = {}
         self.traffic_generators = []
-
+        self.flows = {}
 
 class TerminationPoint:
     def __init__(self, id):
         self.id = id
 
+class Interface:
+    def __init__(self, name, address):
+        self.name = name
+        self.address = address
 
 class TrafficGenerator:
     def __init__(self, frame_size, interframe_gap, src_address, dst_address):
@@ -30,7 +34,6 @@ class TrafficGenerator:
         self.src_address = src_address
         self.dst_address = dst_address
 
-
 class Link:
     def __init__(self, id, source_node, source_tp, dest_node, dest_tp):
         self.id = id
@@ -38,6 +41,14 @@ class Link:
         self.source_tp = source_tp
         self.dest_node = dest_node
         self.dest_tp = dest_tp
+
+class Flow:
+    def __init__(self, id, in_port, eth_src, eth_dest, out_port):
+        self.id = id
+        self.in_port = in_port
+        self.eth_src = eth_src
+        self.eth_dest = eth_dest
+        self.out_port = out_port
 
 
 def parse_network_xml(xml_file_name):
@@ -48,7 +59,11 @@ def parse_network_xml(xml_file_name):
         "nt": "urn:ietf:params:xml:ns:yang:ietf-network-topology",
         "netconf-acm": "urn:ietf:params:xml:ns:yang:ietf-netconf-acm",
         "netconf-node": "urn:tntapi:netconf-node",
-        "tg": "urn:omnetpp:summit:2018:xml:ns:yang:traffic-generator"
+        "fl": "urn:ietf:params:xml:ns:yang:ietf-network-bridge-flows",
+        "tg": "urn:omnetpp:summit:2018:xml:ns:yang:traffic-generator",
+        "if": "urn:ietf:params:xml:ns:yang:ietf-interfaces",
+        "ift": "urn:ietf:params:xml:ns:yang:iana-if-type",
+        "eth": "urn:ietf:params:xml:ns:yang:ietf-interfaces-ethernet-like",
     }
 
     tree = lxml.etree.parse(xml_file_name)
@@ -107,6 +122,41 @@ def parse_network_xml(xml_file_name):
                 print("   ", frame_size, interframe_gap,
                       src_address, dst_address)
 
+
+            interfaces = config.xpath(
+                "if:interfaces/if:interface", namespaces=namespaces)
+
+            for interface in interfaces:
+                name = interface.xpath("if:name/text()", namespaces=namespaces)
+                address = interface.xpath(
+                    "eth:ethernet-like/eth:mac-address/text()", namespaces=namespaces)
+
+                if name and address:
+                    interface_data = Interface(name[0], address[0])
+                    node_data.interfaces[name[0]] = interface_data
+                    print("   ", name[0], address[0])
+
+
+            flows = config.xpath(
+                "fl:flows/fl:flow", namespaces=namespaces)
+
+            for flow in flows:
+                flow_id = flow.xpath("fl:id/text()", namespaces=namespaces)[0]
+
+                in_port = flow.xpath("fl:match/fl:in-port/text()", namespaces=namespaces)[0]
+
+                eth_src = flow.xpath("fl:match/fl:ethernet-match/fl:ethernet-source/fl:address/text()", namespaces=namespaces)
+                eth_dest = flow.xpath("fl:match/fl:ethernet-match/fl:ethernet-destination/fl:address/text()", namespaces=namespaces)
+
+                out_port = flow.xpath("fl:actions/fl:action/fl:output-action/fl:out-port/text()", namespaces=namespaces)[0]
+
+                if eth_src and eth_dest:
+                    flow_data = Flow(flow_id, in_port, eth_src[0], eth_dest[0], out_port)
+
+                    print("   ", in_port, eth_src[0], eth_dest[0], out_port)
+
+                    node_data.flows[flow_id] = flow_data
+
     links = network.xpath("nt:link", namespaces=namespaces)
 
     for link in links:
@@ -145,7 +195,13 @@ def id_to_type(id):
 # TODO: deduplicate types for identical nodes?
 def generate_host_type(node_data, ned_file, ethernet_datarate):
     print("module {}\n{{".format(id_to_type(node_data.id)), file=ned_file)
-    print("    @networkNode;", file=ned_file)
+    print("    parameters:", file=ned_file)
+    print("        @networkNode;", file=ned_file)
+    print("        **.interfaceTableModule = default(\"\");", file=ned_file)
+
+    for intf_name, intf in node_data.interfaces.items():
+        print("        eth_{}.mac.address = \"{}\";".format(intf.name, intf.address), file=ned_file)
+
     print("    gates:", file=ned_file)
 
     for tp_id, tp in node_data.termination_points.items():
@@ -189,8 +245,21 @@ def generate_switch_type(node_data, ned_file, ethernet_datarate):
     print("module {}\n{{".format(id_to_type(node_data.id)), file=ned_file)
     print("    parameters:", file=ned_file)
     print("        @networkNode;", file=ned_file)
-    print("        @display(\"i=device/switch;bgb={},400\");".format(len(node_data.termination_points)*100 + 300), file=ned_file)
+    print("        @display(\"i=device/switch;bgb={},400\");\n".format(len(node_data.termination_points)*100 + 300), file=ned_file)
     print("        **.interfaceTableModule = default(\"\");", file=ned_file)
+
+    print("""        filteringDatabase.database = xml(" \\""", file=ned_file)
+    print("""            <filteringDatabases><filteringDatabase id=\\"{}\\"> \\""".format(id_to_name(node_data.id)), file=ned_file)
+    print("""                <static><forward> \\""", file=ned_file)
+
+    for flow_id, flow in node_data.flows.items():
+        ifs = list(node_data.termination_points.keys())
+        out_port = ifs.index(flow.out_port)
+
+        print("""                    <individualAddress macAddress=\\"{}\\" port=\\"{}\\" /> \\""".format(flow.eth_dest, out_port), file=ned_file)
+
+    print("""                </forward></static> \\""", file=ned_file)
+    print("""            </filteringDatabase></filteringDatabases>");\n""", file=ned_file)
 
     print("    gates:", file=ned_file)
 
