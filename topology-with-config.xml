@@ -266,6 +266,16 @@
         <config xmlns="urn:tntapi:netconf-node">
           <nacm xmlns="urn:ietf:params:xml:ns:yang:ietf-netconf-acm">
           </nacm>
+          <interfaces xmlns="urn:ietf:params:xml:ns:yang:ietf-interfaces">
+            <interface>
+              <name>p0</name>
+              <type
+                xmlns:ianaift="urn:ietf:params:xml:ns:yang:iana-if-type">ianaift:ethernetCsmacd</type>
+              <ethernet-like xmlns="urn:ietf:params:xml:ns:yang:ietf-interfaces-ethernet-like">
+                <mac-address>00:00:00:00:00:00</mac-address>
+              </ethernet-like>
+            </interface>
+          </interfaces>
           <traffic-generator xmlns="urn:omnetpp:summit:2018:xml:ns:yang:traffic-generator">
             <frame-size>1514</frame-size>
             <interframe-gap>12</interframe-gap>
@@ -280,18 +290,47 @@
         <termination-point xmlns="urn:ietf:params:xml:ns:yang:ietf-network-topology">
           <tp-id>p0</tp-id>
         </termination-point>
+        <config xmlns="urn:tntapi:netconf-node">
+          <nacm xmlns="urn:ietf:params:xml:ns:yang:ietf-netconf-acm">
+          </nacm>
+          <interfaces xmlns="urn:ietf:params:xml:ns:yang:ietf-interfaces">
+            <interface>
+              <name>p0</name>
+              <type
+                xmlns:ianaift="urn:ietf:params:xml:ns:yang:iana-if-type">ianaift:ethernetCsmacd</type>
+              <ethernet-like xmlns="urn:ietf:params:xml:ns:yang:ietf-interfaces-ethernet-like">
+                <mac-address>00:00:00:00:00:01</mac-address>
+              </ethernet-like>
+            </interface>
+          </interfaces>
+        </config>
         <netconf-connect-params xmlns="urn:tntapi:netconf-node">
           <user>root</user>
           <password>change-me</password>
           <server>10.0.0.11</server>
           <ncport>830</ncport>
         </netconf-connect-params>
+
       </node>
       <node>
         <node-id>host2</node-id>
         <termination-point xmlns="urn:ietf:params:xml:ns:yang:ietf-network-topology">
           <tp-id>p0</tp-id>
         </termination-point>
+        <config xmlns="urn:tntapi:netconf-node">
+          <nacm xmlns="urn:ietf:params:xml:ns:yang:ietf-netconf-acm">
+          </nacm>
+          <interfaces xmlns="urn:ietf:params:xml:ns:yang:ietf-interfaces">
+            <interface>
+              <name>p0</name>
+              <type
+                xmlns:ianaift="urn:ietf:params:xml:ns:yang:iana-if-type">ianaift:ethernetCsmacd</type>
+              <ethernet-like xmlns="urn:ietf:params:xml:ns:yang:ietf-interfaces-ethernet-like">
+                <mac-address>00:00:00:00:00:02</mac-address>
+              </ethernet-like>
+            </interface>
+          </interfaces>
+        </config>
         <netconf-connect-params xmlns="urn:tntapi:netconf-node">
           <user>root</user>
           <password>change-me</password>
