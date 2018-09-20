@@ -319,8 +319,6 @@ def generate_network_ned(network_data, ned_file_name):
     ethernet_datarate = 1000 # in Mbps
 
     with open(ned_file_name, "wt") as of:
-        print("package yang_to_opp;", file=of)
-        print("", file=of)
         print("""import inet.applications.ethernet.EtherTrafGen;
 import inet.linklayer.ethernet.EthernetInterface;
 
