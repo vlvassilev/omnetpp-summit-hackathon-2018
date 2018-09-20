@@ -1,0 +1,25 @@
+#!/bin/bash -e
+
+# Assuming ~/inet ~/nesting and are existing and built INET and NeSTiNg repositories,
+# and ~/omnetpp-summit-hackathon-2018 is this repository
+
+
+XML_FILE=$1
+
+NED_FILE=${1/".xml"/".ned"}
+
+# echo $XML_FILE $NED_FILE
+
+shift
+
+python3 ~/omnetpp-summit-hackathon-2018/yang-to-opp/yang-to-opp.py $XML_FILE $NED_FILE
+
+NETWORK=$(egrep 'network ' $NED_FILE  | cut -d ' '  -f 2)
+
+echo "[General]" > omnetpp.ini
+
+opp_run -n .:$HOME/inet/src:$HOME/nesting/src -l $HOME/inet/src/libINET.so -l $HOME/nesting/src/libnesting.so --network=$NETWORK -u Cmdenv "$@"
+
+# echo $NETWORK
+
+
