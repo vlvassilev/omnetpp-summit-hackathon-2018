@@ -1,6 +1,6 @@
 #!/bin/bash -e
 
-# Assuming that ~/inet and ~/nesting are built
+# Assuming that ~/omnetpp-5.4.1, ~/inet and ~/nesting are built
 
 export PATH=~/omnetpp-5.4.1/bin:$PATH
 

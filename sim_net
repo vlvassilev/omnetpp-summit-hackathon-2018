@@ -14,8 +14,9 @@ shift
 
 python3 ~/omnetpp-summit-hackathon-2018/yang-to-opp/yang-to-opp.py $XML_FILE $NED_FILE
 
-NETWORK=$(egrep 'network ' $NED_FILE  | cut -d ' '  -f 2)
+NETWORK=$(egrep 'network ' $NED_FILE | cut -d ' '  -f 2)
 
+# This "empty" file still has to be there, even though the generated .ned is self-contained
 echo "[General]" > omnetpp.ini
 
 opp_run -n .:$HOME/inet/src:$HOME/nesting/src -l $HOME/inet/src/libINET.so -l $HOME/nesting/src/libnesting.so --network=$NETWORK -u Cmdenv "$@"
