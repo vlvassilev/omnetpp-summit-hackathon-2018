@@ -1,3 +1,5 @@
+#!/usr/bin/env python3
+
 import sys
 import lxml
 import lxml.etree
@@ -200,7 +202,7 @@ def generate_host_type(node_data, ned_file, ethernet_datarate):
     print("        **.interfaceTableModule = default(\"\");", file=ned_file)
 
     for intf_name, intf in node_data.interfaces.items():
-        print("        eth_{}.mac.address = \"{}\";".format(intf.name, intf.address), file=ned_file)
+        print("        eth_{}.macAddress = \"{}\";".format(intf.name, intf.address), file=ned_file)
 
     print("    gates:", file=ned_file)
 
@@ -285,15 +287,18 @@ def generate_switch_type(node_data, ned_file, ethernet_datarate):
 
         # TODO: group all of this into a "port" compound module?
         print("""
-        queuing_{tp_name}: Queuing {{
+        processingDelay_{tp_name}: Delayer {{
             @display("p={x1},200");
             tsAlgorithms[*].macModule = "^.^.lowerLayer_{tp_name}.mac";
             gateController.macModule = "^.^.lowerLayer_{tp_name}.mac";
         }}
-        lowerLayer_{tp_name}: LowerLayer {{
+        eth_{tp_name}: VLANEthernetInterfaceSwitchPreemptable {{
             @display("p={x2},300");
-            mac.queueModule = "^.^.queuing_{tp_name}.transmissionSelection";
+            mac.queueModule = "^.^.eth_{tp_name}.queuing.transmissionSelection";
+            **.tsAlgorithms[*].macModule = "^.^.^.eth_{tp_name}.mac";
+            **.gateController.macModule = "^.^.^.eth_{tp_name}.mac";
             mac.mtu = 1500B;
+            mac.promiscuous = true;
         }}
 """.format(x1=275 + i*100, x2=300 + i*100, tp_name=tp_name), file=ned_file)
 
@@ -302,11 +307,10 @@ def generate_switch_type(node_data, ned_file, ethernet_datarate):
     for i, (tp_id, tp) in enumerate(node_data.termination_points.items()):
         tp_name = id_to_name(tp.id)
         print("""
-            lowerLayer_{tp_name}.phys <--> {{ @display("m=s"); }} <--> {tp_name};
-            lowerLayer_{tp_name}.upperLayerOut --> relayUnit.in[{i}];
-            relayUnit.out[{i}] --> queuing_{tp_name}.in;
-            queuing_{tp_name}.eOut --> lowerLayer_{tp_name}.upperLayerEIn;
-            queuing_{tp_name}.pOut --> lowerLayer_{tp_name}.upperLayerPIn;
+            eth_{tp_name}.phys <--> {{ @display("m=s"); }} <--> {tp_name};
+            eth_{tp_name}.upperLayerOut --> processingDelay_{tp_name}.in;
+            processingDelay_{tp_name}.out --> relayUnit.in[{i}];
+            relayUnit.out[{i}] --> eth_{tp_name}.upperLayerIn;
 """.format(i=i, tp_name=tp_name), file=ned_file)
 
 
@@ -329,7 +333,7 @@ import nesting.ieee8021q.queue.Queuing;
 import nesting.ieee8021q.queue.gating.ScheduleSwap;
 import nesting.ieee8021q.relay.FilteringDatabase;
 import nesting.ieee8021q.relay.RelayUnit;
-import nesting.linklayer.LowerLayer;
+import nesting.node.ethernet.VLANEthernetInterfaceSwitchPreemptable;
 """, file=of)
 
         for node_id, node in network_data.nodes.items():
