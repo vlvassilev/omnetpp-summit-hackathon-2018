@@ -10,12 +10,11 @@ On a fresh Debian Stretch system (or container):
 ### Preparation
 
  - Install git and clone this repository in your home directory (so the root is `~/omnetpp-summit-hackathon-2018`)
- - Download the [OMNeT++ 5.4.1 core release archive](https://www.omnetpp.org/omnetpp/download/30-omnet-releases/2329-omnetpp-5-4-1-core), and put it in your home directory
 
 ### Option 1:
  - Change into the `yang-to-opp` directory, and run the `all-in-one.sh` script. It will:
    - Install all dependencies (first asking for your password using `sudo`)
-   - Extract and build OMNeT++ (in `~/omnetpp-5.4.1`)
+   - Download, extract and build OMNeT++ (in `~/omnetpp-5.4.1`)
    - Download and build INET and NeSTiNg (in `~/inet` and `~/nesting`)
    - Convert an example .xml file included in this repo to a .ned file
    - Run the example simulation
