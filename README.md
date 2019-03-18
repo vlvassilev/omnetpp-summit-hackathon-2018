@@ -51,6 +51,8 @@ shell> rm /tmp/ncxserver.sock ; gdb --args /usr/sbin/netconfd  \
 --superuser=${USER} \
 --startup=config-host0.xml
 ```
+
+```
 yangcli> create /traffic-generator -- dst-address=00:00:00:00:00:02 src-address=00:00:00:00:00:00 frame-size=1514 interframe-gap=12
 yangcli> commit
 ```
@@ -76,5 +78,6 @@ create /flows/flow[id='unmatched-from-p2'] -- match/in-port=p2 actions/action[or
 commit
 ```
 
-#Simulating (TODO):
+# Simulating (TODO):
+
  ./sim_net topology-with-config.xml --sim-time=20 > topology-with-operational-data.xml
