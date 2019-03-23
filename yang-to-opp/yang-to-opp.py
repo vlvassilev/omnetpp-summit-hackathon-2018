@@ -223,7 +223,7 @@ def generate_host_type(node_data, ned_file, ethernet_datarate):
 
         print("        encap_{}: {} {{ @display(\"p=100,150\"); }};".format(id_to_name(tp.id), "VLANEncap"), file=ned_file)
 
-        print("        sink_{}: {};".format(id_to_name(tp.id), "Sink"), file=ned_file)
+        print("        analyzer_{}: {} {{ @display(\"p=100,50\"); }};".format(id_to_name(tp.id), "TrafficAnalyzer"), file=ned_file)
         print("        queue_{}: {} {{ @display(\"p=150,100\"); }};".format(id_to_name(tp.id), "FifoQueue"), file=ned_file)
 
         print("        gen_{}: {} {{".format(id_to_name(tp.id), "TrafficGenerator"), file=ned_file)
@@ -247,7 +247,7 @@ def generate_host_type(node_data, ned_file, ethernet_datarate):
     print("    connections:", file=ned_file)
 
     for tp_id, tp in node_data.termination_points.items():
-        print("        encap_{}.upperLayerOut --> sink_{}.in++;".format(id_to_name(tp.id), id_to_name(tp.id)), file=ned_file)
+        print("        encap_{}.upperLayerOut --> analyzer_{}.in;".format(id_to_name(tp.id), id_to_name(tp.id)), file=ned_file)
 
         print("        queue_{}.in++ <-- gen_{}.out;".format(id_to_name(tp.id), id_to_name(tp.id)), file=ned_file)
         print("        encap_{}.upperLayerIn <-- queue_{}.out;".format(id_to_name(tp.id), id_to_name(tp.id)), file=ned_file)
@@ -347,7 +347,6 @@ def generate_network_ned(network_data, ned_file_name):
     with open(ned_file_name, "wt") as of:
         print("""
 import inet.common.queue.Delayer;
-import inet.common.queue.Sink;
 import inet.common.queue.FifoQueue;
 import inet.networklayer.common.InterfaceTable;
 import nesting.ieee8021q.clock.IClock;
@@ -357,6 +356,7 @@ import nesting.ieee8021q.relay.FilteringDatabase;
 import nesting.ieee8021q.relay.RelayUnit;
 import nesting.linklayer.ethernet.VLANEncap;
 import yto.TrafficGenerator;
+import yto.TrafficAnalyzer;
 import nesting.node.ethernet.VLANEthernetInterfaceSwitchPreemptable;
 import nesting.node.ethernet.VLANEthernetInterfaceHost;
 """, file=of)
