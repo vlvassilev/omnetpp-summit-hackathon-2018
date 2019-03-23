@@ -26,8 +26,8 @@ NETWORK=$(egrep 'network ' $NED_FILE | cut -d ' '  -f 2)
 # This "empty" file still has to be there, even though the generated .ned is self-contained
 echo "[General]" > omnetpp.ini
 
-echo "opp_run$DBG -n .:$INET_DIR/src:$NESTING_DIR/src -l $INET_DIR/src/libINET$DBG.so -l $NESTING_DIR/src/libnesting$DBG.so --image-path=$INET_DIR/images --network=$NETWORK "$@""
+# echo "opp_run$DBG -n .:$INET_DIR/src:$NESTING_DIR/src -l $INET_DIR/src/libINET$DBG.so -l $NESTING_DIR/src/libnesting$DBG.so -l libyto_dbg.so --image-path=$INET_DIR/images --network=$NETWORK "$@""
 
-opp_run$DBG -n .:$INET_DIR/src:$NESTING_DIR/src -l $INET_DIR/src/libINET$DBG.so -l $NESTING_DIR/src/libnesting$DBG.so --image-path=$INET_DIR/images --network=$NETWORK "$@"
+opp_run$DBG -n .:../src:$INET_DIR/src:$NESTING_DIR/src -l $INET_DIR/src/libINET$DBG.so -l $NESTING_DIR/src/libnesting$DBG.so -l ../src/libyto_dbg.so --image-path=$INET_DIR/images --network=$NETWORK "$@"
 
 # echo $NETWORK

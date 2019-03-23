@@ -224,7 +224,7 @@ def generate_host_type(node_data, ned_file, ethernet_datarate):
         print("        encap_{}: {} {{ @display(\"p=100,150\"); }};".format(id_to_name(tp.id), "VLANEncap"), file=ned_file)
 
         print("        sink_{}: {};".format(id_to_name(tp.id), "Sink"), file=ned_file)
-        print("        gen_{}: {} {{".format(id_to_name(tp.id), "EtherTrafGenQueue"), file=ned_file)
+        print("        gen_{}: {} {{".format(id_to_name(tp.id), "TrafficGenerator"), file=ned_file)
         print("            @display(\"p=100,100\");", file=ned_file)
         if traf_gen:
             print("            packetLength = {}B - 18B;".format(traf_gen.frame_size), file=ned_file)
@@ -234,7 +234,6 @@ def generate_host_type(node_data, ned_file, ethernet_datarate):
             print("            etherType = 2048;", file=ned_file)
             print("            pcp = 5;", file=ned_file)
             print("            vlanTagEnabled = true;", file=ned_file)
-
         else:
             print("            destAddress = \"00:00:00:00:00:00\";", file=ned_file)
             print("            packetLength = 10B;", file=ned_file)
@@ -341,9 +340,7 @@ def generate_network_ned(network_data, ned_file_name):
     ethernet_datarate = 1000 # in Mbps
 
     with open(ned_file_name, "wt") as of:
-        print("""import inet.applications.ethernet.EtherTrafGen;
-import inet.linklayer.ethernet.EthernetInterface;
-
+        print("""
 import inet.common.queue.Delayer;
 import inet.common.queue.Sink;
 import inet.networklayer.common.InterfaceTable;
@@ -353,7 +350,7 @@ import nesting.ieee8021q.queue.gating.ScheduleSwap;
 import nesting.ieee8021q.relay.FilteringDatabase;
 import nesting.ieee8021q.relay.RelayUnit;
 import nesting.linklayer.ethernet.VLANEncap;
-import nesting.common.queue.EtherTrafGenQueue;
+import yto.TrafficGenerator;
 import nesting.node.ethernet.VLANEthernetInterfaceSwitchPreemptable;
 import nesting.node.ethernet.VLANEthernetInterfaceHost;
 """, file=of)
