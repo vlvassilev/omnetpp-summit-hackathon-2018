@@ -218,25 +218,28 @@ def generate_host_type(node_data, ned_file, ethernet_datarate):
         print("        eth_{}: {} {{".format(id_to_name(tp.id), "VLANEthernetInterfaceHost"), file=ned_file)
         print("            @display(\"p=100,200\");", file=ned_file)
         if traf_gen:
-            print("            mac.queueModule = \"^.^.gen_{}\";".format(id_to_name(tp.id)), file=ned_file)
+            print("            mac.queueModule = \"^.^.queue_{}\";".format(id_to_name(tp.id)), file=ned_file)
         print("        };", file=ned_file)
 
         print("        encap_{}: {} {{ @display(\"p=100,150\"); }};".format(id_to_name(tp.id), "VLANEncap"), file=ned_file)
 
         print("        sink_{}: {};".format(id_to_name(tp.id), "Sink"), file=ned_file)
+        print("        queue_{}: {} {{ @display(\"p=150,100\"); }};".format(id_to_name(tp.id), "FifoQueue"), file=ned_file)
+
         print("        gen_{}: {} {{".format(id_to_name(tp.id), "TrafficGenerator"), file=ned_file)
-        print("            @display(\"p=100,100\");", file=ned_file)
+
+        print("            @display(\"p=150,50\");", file=ned_file)
         if traf_gen:
-            print("            packetLength = {}B - 18B;".format(traf_gen.frame_size), file=ned_file)
-            print("            // computing the frame sending time interval based on frame length, interframe gap, and transmission rate. also accounting for the preamble, the SFD, and the FCS", file=ned_file)
-            print("            // sendInterval = s((7 + 1 + {} + 4 + {})*8 / ({} * 1e6));".format(traf_gen.frame_size, traf_gen.interframe_gap, ethernet_datarate), file=ned_file)
+            print("            frameSize = {}B;".format(traf_gen.frame_size), file=ned_file)
+            print("            interFrameGap = {}B;".format(traf_gen.interframe_gap), file=ned_file)
             print("            destAddress = \"{}\";".format(traf_gen.dst_address), file=ned_file)
+            #    TODO:
             print("            etherType = 2048;", file=ned_file)
             print("            pcp = 5;", file=ned_file)
             print("            vlanTagEnabled = true;", file=ned_file)
         else:
             print("            destAddress = \"00:00:00:00:00:00\";", file=ned_file)
-            print("            packetLength = 10B;", file=ned_file)
+            print("            frameSize = 0B;", file=ned_file)
             print("            // sendInterval = 0s;", file=ned_file)
 
         print("        }", file=ned_file)
@@ -245,7 +248,9 @@ def generate_host_type(node_data, ned_file, ethernet_datarate):
 
     for tp_id, tp in node_data.termination_points.items():
         print("        encap_{}.upperLayerOut --> sink_{}.in++;".format(id_to_name(tp.id), id_to_name(tp.id)), file=ned_file)
-        print("        encap_{}.upperLayerIn <-- gen_{}.out;".format(id_to_name(tp.id), id_to_name(tp.id)), file=ned_file)
+
+        print("        queue_{}.in++ <-- gen_{}.out;".format(id_to_name(tp.id), id_to_name(tp.id)), file=ned_file)
+        print("        encap_{}.upperLayerIn <-- queue_{}.out;".format(id_to_name(tp.id), id_to_name(tp.id)), file=ned_file)
 
         print("        eth_{}.upperLayerOut --> encap_{}.lowerLayerIn;".format(id_to_name(tp.id), id_to_name(tp.id)), file=ned_file)
         print("        eth_{}.upperLayerIn <-- encap_{}.lowerLayerOut;".format(id_to_name(tp.id), id_to_name(tp.id)), file=ned_file)
@@ -343,6 +348,7 @@ def generate_network_ned(network_data, ned_file_name):
         print("""
 import inet.common.queue.Delayer;
 import inet.common.queue.Sink;
+import inet.common.queue.FifoQueue;
 import inet.networklayer.common.InterfaceTable;
 import nesting.ieee8021q.clock.IClock;
 import nesting.ieee8021q.queue.Queuing;

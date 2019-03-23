@@ -19,7 +19,6 @@
 #include <omnetpp.h>
 #include <list>
 
-#include "inet/common/queue/IPassiveQueue.h"
 #include "inet/linklayer/common/MacAddress.h"
 #include "inet/common/lifecycle/ILifecycle.h"
 #include "inet/common/packet/chunk/ByteCountChunk.h"
@@ -38,13 +37,10 @@ using namespace std;
 namespace yto {
 
 /** See the NED file for a detailed description */
-class TrafficGenerator: public cSimpleModule, public IPassiveQueue {
+class TrafficGenerator: public cSimpleModule {
 protected:
     /** Sequence number for generated packets. */
     long seqNum;
-
-    /** EtherMacBase requests a packet twice during init, tmp fix so that this module only delivers one packet */
-    bool doNotSendFirstInitPacket = true;
 
     /** Destination MAC address of generated packets. */
     MacAddress destMacAddress;
@@ -58,32 +54,25 @@ protected:
     int ssap = -1;
     int dsap = -1;
 
-    cPar* packetLength;
+    cPar* frameSize;
+    cPar* interFrameGap;
 
     /** Amount of packets sent for statistic. */
     long packetsSent;
 
     // signals
     simsignal_t sentPkSignal;
+
+    SimTime iaTime();
+    int overheadBytes(); // over the actual ethernet payload, including all headers, preamble, fcs...
+
 protected:
     virtual void initialize() override;
 
     virtual void handleMessage(cMessage *msg) override;
-    virtual Packet* generatePacket();
-public:
-    virtual void requestPacket() override;
-    virtual int getNumPendingRequests() override;
-    virtual bool isEmpty() override;
-    virtual void clear() {
-    }
-    ;
-    virtual cMessage *pop() override;
-    virtual void addListener(IPassiveQueueListener *listener) {
-    }
-    ;
-    virtual void removeListener(IPassiveQueueListener *listener) {
-    }
-    ;
+    virtual Packet* makeFrame();
+    virtual void sendFrame();
+
 };
 
 } // namespace nesting

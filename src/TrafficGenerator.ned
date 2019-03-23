@@ -32,7 +32,8 @@ simple TrafficGenerator
         int pcp = default(0);					// PCP (Priority Code Point) value that is added to the packets control information
         bool dei = default(false);				// DEI (Drop Eligible Indicator) that is added to the packets control information
         int vid = default(1);					// VID (VLAN Identifier) value that is added to the packets control information
-        volatile int packetLength @unit(B);		// length of packets to send
+        volatile int frameSize @unit(B);		// length of packets to send
+        volatile int interFrameGap @unit(B) = default(12B);	// length of gaps between frames
         @signal[sentPk](type=cPacket);
         @statistic[sentPk](title="packets sent"; source=sentPk; record=count,"sum(packetBytes)","vector(packetBytes)"; interpolationmode=none);
         bool verbose = default(false);

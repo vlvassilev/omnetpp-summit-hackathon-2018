@@ -50,7 +50,8 @@ void TrafficGenerator::initialize() {
     pcp = &par("pcp");
     dei = &par("dei");
     vid = &par("vid");
-    packetLength = &par("packetLength");
+    frameSize = &par("frameSize");
+    interFrameGap = &par("interFrameGap");
     const char *destAddress = par("destAddress");
     if (!destMacAddress.tryParse(destAddress)) {
         throw new cRuntimeError("Invalid MAC Address");
@@ -60,13 +61,41 @@ void TrafficGenerator::initialize() {
     packetsSent = 0;
     WATCH(packetsSent);
 
+    if (frameSize->intValue() > 0)
+        scheduleAt(simTime(), new cMessage("sendNextFrame"));
+}
+
+/*
+    Ethernet frame-size in octets includes:
+    * Destination Address (6 octets),
+    * Source Address (6 octets),
+    * Frame Type (2 octets),
+    * Data (min 46 octets or 42 octets + 4 octets 802.1Q tag),
+    * CRC Checksum (4 octets).
+
+    Ethernet frame-size does not include:
+    * Preamble (dependent on MAC configuration
+            by default 7 octets),
+    * Start of frame delimeter (1 octet)
+*/
+
+int TrafficGenerator::overheadBytes() {
+    // not including preamble and SFD, includes FCS
+    return 6 + 6 + (vlanTagEnabled->boolValue() ? 4 : 0) + 2 + /* payload here */ 4;
+}
+
+SimTime TrafficGenerator::iaTime() {
+    // TODO: take the actual datarate into account
+    return SimTime(7 + 1 + frameSize->intValue() + interFrameGap->intValue()) * 8 / 1e9;
 }
 
 void TrafficGenerator::handleMessage(cMessage *msg) {
-    throw cRuntimeError("cannot handle messages.");
+    ASSERT(msg->isSelfMessage());
+    scheduleAt(simTime() + iaTime(), msg);
+    sendFrame();
 }
 
-Packet* TrafficGenerator::generatePacket() {
+Packet* TrafficGenerator::makeFrame() {
     seqNum++;
 
     char msgname[40];
@@ -74,8 +103,9 @@ Packet* TrafficGenerator::generatePacket() {
 
     // create new packet
     Packet *datapacket = new Packet(msgname, IEEE802CTRL_DATA);
-    long len = packetLength->intValue();
-    const auto& payload = makeShared<ByteCountChunk>(B(len));
+
+    long payloadLen = frameSize->intValue() - overheadBytes();
+    const auto& payload = makeShared<ByteCountChunk>(B(payloadLen));
     // set creation time
     auto timeTag = payload->addTag<CreationTimeTag>();
     timeTag->setCreationTime(simTime());
@@ -91,34 +121,20 @@ Packet* TrafficGenerator::generatePacket() {
 
     auto macTag = datapacket->addTag<MacAddressReq>();
     macTag->setDestAddress(destMacAddress);
+    // TODO: src address
 
-    uint8_t PCP;
-    bool de;
-    short VID;
     // create VLAN control info
     if (vlanTagEnabled->boolValue()) {
         auto ieee8021q = datapacket->addTag<nesting::VLANTagReq>();
-        PCP = pcp->intValue();
-        de = dei->boolValue();
-        VID = vid->intValue();
-        ieee8021q->setPcp(PCP);
-        ieee8021q->setDe(de);
-        ieee8021q->setVID(VID);
+        ieee8021q->setPcp(pcp->intValue());
+        ieee8021q->setDe(dei->boolValue());
+        ieee8021q->setVID(vid->intValue());
     }
     return datapacket;
 }
 
-void TrafficGenerator::requestPacket() {
-    Enter_Method("requestPacket(...)");
-
-    /*
-    if(doNotSendFirstInitPacket) {
-        doNotSendFirstInitPacket = false;
-        return;
-    }
-    */
-
-    Packet* packet = generatePacket();
+void TrafficGenerator::sendFrame() {
+    Packet* packet = makeFrame();
 
     if(par("verbose")) {
         auto macTag = packet->findTag<MacAddressReq>();
@@ -136,19 +152,5 @@ void TrafficGenerator::requestPacket() {
     packetsSent++;
 }
 
-int TrafficGenerator::getNumPendingRequests() {
-    // Requests are always served immediately,
-    // therefore no pending requests exist.
-    return 0;
-}
-
-bool TrafficGenerator::isEmpty() {
-    // Queue is never empty
-    return false;
-}
-
-cMessage* TrafficGenerator::pop() {
-    return generatePacket();
-}
 
 } // namespace nesting
