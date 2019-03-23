@@ -200,9 +200,10 @@ def generate_host_type(node_data, ned_file, ethernet_datarate):
     print("    parameters:", file=ned_file)
     print("        @networkNode;", file=ned_file)
     print("        **.interfaceTableModule = default(\"\");", file=ned_file)
+    print("        **.registerProtocol = true;", file=ned_file)
 
     for intf_name, intf in node_data.interfaces.items():
-        print("        eth_{}.macAddress = \"{}\";".format(intf.name, intf.address), file=ned_file)
+        print("        eth_{}.address = \"{}\";".format(intf.name, intf.address), file=ned_file)
 
     print("    gates:", file=ned_file)
 
@@ -214,29 +215,43 @@ def generate_host_type(node_data, ned_file, ethernet_datarate):
     traf_gen = node_data.traffic_generators[0] if node_data.traffic_generators else None
 
     for tp_id, tp in node_data.termination_points.items():
-        print("        eth_{}: {} {{ @display(\"p=100,200\"); }};".format(id_to_name(tp.id), "EthernetInterface"), file=ned_file)
+        print("        eth_{}: {} {{".format(id_to_name(tp.id), "VLANEthernetInterfaceHost"), file=ned_file)
+        print("            @display(\"p=100,200\");", file=ned_file)
+        if traf_gen:
+            print("            mac.queueModule = \"^.^.gen_{}\";".format(id_to_name(tp.id)), file=ned_file)
+        print("        };", file=ned_file)
 
-        print("        app_{}: {} {{".format(id_to_name(tp.id), "EtherTrafGen"), file=ned_file)
+        print("        encap_{}: {} {{ @display(\"p=100,150\"); }};".format(id_to_name(tp.id), "VLANEncap"), file=ned_file)
+
+        print("        sink_{}: {};".format(id_to_name(tp.id), "Sink"), file=ned_file)
+        print("        gen_{}: {} {{".format(id_to_name(tp.id), "EtherTrafGenQueue"), file=ned_file)
         print("            @display(\"p=100,100\");", file=ned_file)
         if traf_gen:
-            print("            // the EtherTrafGen application takes the payload size as parameter, so subtracting the header size", file=ned_file)
-            print("            packetLength = {}B - 14B;".format(traf_gen.frame_size), file=ned_file)
+            print("            packetLength = {}B - 18B;".format(traf_gen.frame_size), file=ned_file)
             print("            // computing the frame sending time interval based on frame length, interframe gap, and transmission rate. also accounting for the preamble, the SFD, and the FCS", file=ned_file)
-            print("            sendInterval = s((7 + 1 + {} + 4 + {})*8 / ({} * 1e6));".format(traf_gen.frame_size, traf_gen.interframe_gap, ethernet_datarate), file=ned_file)
+            print("            // sendInterval = s((7 + 1 + {} + 4 + {})*8 / ({} * 1e6));".format(traf_gen.frame_size, traf_gen.interframe_gap, ethernet_datarate), file=ned_file)
             print("            destAddress = \"{}\";".format(traf_gen.dst_address), file=ned_file)
+            print("            etherType = 2048;", file=ned_file)
+            print("            pcp = 5;", file=ned_file)
+            print("            vlanTagEnabled = true;", file=ned_file)
+
         else:
-            print("            packetLength = 0B;", file=ned_file)
-            print("            sendInterval = 0s;", file=ned_file)
+            print("            destAddress = \"00:00:00:00:00:00\";", file=ned_file)
+            print("            packetLength = 10B;", file=ned_file)
+            print("            // sendInterval = 0s;", file=ned_file)
+
         print("        }", file=ned_file)
 
     print("    connections:", file=ned_file)
 
     for tp_id, tp in node_data.termination_points.items():
+        print("        encap_{}.upperLayerOut --> sink_{}.in++;".format(id_to_name(tp.id), id_to_name(tp.id)), file=ned_file)
+        print("        encap_{}.upperLayerIn <-- gen_{}.out;".format(id_to_name(tp.id), id_to_name(tp.id)), file=ned_file)
+
+        print("        eth_{}.upperLayerOut --> encap_{}.lowerLayerIn;".format(id_to_name(tp.id), id_to_name(tp.id)), file=ned_file)
+        print("        eth_{}.upperLayerIn <-- encap_{}.lowerLayerOut;".format(id_to_name(tp.id), id_to_name(tp.id)), file=ned_file)
+
         print("        {} <--> {{ @display(\"m=s\"); }} <--> eth_{}.phys;".format(id_to_name(tp.id), id_to_name(tp.id)), file=ned_file)
-
-        print("        eth_{}.upperLayerOut --> app_{}.in;".format(id_to_name(tp.id), id_to_name(tp.id)), file=ned_file)
-        print("        eth_{}.upperLayerIn <-- app_{}.out;".format(id_to_name(tp.id), id_to_name(tp.id)), file=ned_file)
-
 
     print("}", file=ned_file)
     print("", file=ned_file)
@@ -249,6 +264,7 @@ def generate_switch_type(node_data, ned_file, ethernet_datarate):
     print("        @networkNode;", file=ned_file)
     print("        @display(\"i=device/switch;bgb={},400\");\n".format(len(node_data.termination_points)*100 + 300), file=ned_file)
     print("        **.interfaceTableModule = default(\"\");", file=ned_file)
+    print("        **.registerProtocol = true;", file=ned_file)
 
     print("""        filteringDatabase.database = xml(" \\""", file=ned_file)
     print("""            <filteringDatabases><filteringDatabase id=\\"{}\\"> \\""".format(id_to_name(node_data.id)), file=ned_file)
@@ -299,6 +315,8 @@ def generate_switch_type(node_data, ned_file, ethernet_datarate):
             **.gateController.macModule = "^.^.^.eth_{tp_name}.mac";
             mac.mtu = 1500B;
             mac.promiscuous = true;
+
+            mac.enablePreemptingFrames = false;
         }}
 """.format(x1=275 + i*100, x2=300 + i*100, tp_name=tp_name), file=ned_file)
 
@@ -327,13 +345,17 @@ def generate_network_ned(network_data, ned_file_name):
 import inet.linklayer.ethernet.EthernetInterface;
 
 import inet.common.queue.Delayer;
+import inet.common.queue.Sink;
 import inet.networklayer.common.InterfaceTable;
 import nesting.ieee8021q.clock.IClock;
 import nesting.ieee8021q.queue.Queuing;
 import nesting.ieee8021q.queue.gating.ScheduleSwap;
 import nesting.ieee8021q.relay.FilteringDatabase;
 import nesting.ieee8021q.relay.RelayUnit;
+import nesting.linklayer.ethernet.VLANEncap;
+import nesting.common.queue.EtherTrafGenQueue;
 import nesting.node.ethernet.VLANEthernetInterfaceSwitchPreemptable;
+import nesting.node.ethernet.VLANEthernetInterfaceHost;
 """, file=of)
 
         for node_id, node in network_data.nodes.items():
