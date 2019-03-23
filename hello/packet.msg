@@ -1,3 +1,0 @@
-packet Packet {
-    string data;
-}
