@@ -41,10 +41,10 @@
         <in-port>p0</in-port>
         <ethernet-match>
           <ethernet-source>
-            <address>00:00:00:00:00:00</address>
+            <address>00:00:00:00:00:01</address>
           </ethernet-source>
           <ethernet-destination>
-            <address>00:00:00:00:00:01</address>
+            <address>00:00:00:00:00:02</address>
           </ethernet-destination>
         </ethernet-match>
       </match>
@@ -63,10 +63,10 @@
         <in-port>p0</in-port>
         <ethernet-match>
           <ethernet-source>
-            <address>00:00:00:00:00:00</address>
+            <address>00:00:00:00:00:01</address>
           </ethernet-source>
           <ethernet-destination>
-            <address>00:00:00:00:00:02</address>
+            <address>00:00:00:00:00:03</address>
           </ethernet-destination>
         </ethernet-match>
       </match>
@@ -85,10 +85,10 @@
         <in-port>p1</in-port>
         <ethernet-match>
           <ethernet-source>
-            <address>00:00:00:00:00:01</address>
+            <address>00:00:00:00:00:02</address>
           </ethernet-source>
           <ethernet-destination>
-            <address>00:00:00:00:00:00</address>
+            <address>00:00:00:00:00:01</address>
           </ethernet-destination>
         </ethernet-match>
       </match>
@@ -107,10 +107,10 @@
         <in-port>p1</in-port>
         <ethernet-match>
           <ethernet-source>
-            <address>00:00:00:00:00:01</address>
+            <address>00:00:00:00:00:02</address>
           </ethernet-source>
           <ethernet-destination>
-            <address>00:00:00:00:00:02</address>
+            <address>00:00:00:00:00:03</address>
           </ethernet-destination>
         </ethernet-match>
       </match>
@@ -129,10 +129,10 @@
         <in-port>p2</in-port>
         <ethernet-match>
           <ethernet-source>
-            <address>00:00:00:00:00:02</address>
+            <address>00:00:00:00:00:03</address>
           </ethernet-source>
           <ethernet-destination>
-            <address>00:00:00:00:00:00</address>
+            <address>00:00:00:00:00:01</address>
           </ethernet-destination>
         </ethernet-match>
       </match>
@@ -151,10 +151,10 @@
         <in-port>p2</in-port>
         <ethernet-match>
           <ethernet-source>
-            <address>00:00:00:00:00:02</address>
+            <address>00:00:00:00:00:03</address>
           </ethernet-source>
           <ethernet-destination>
-            <address>00:00:00:00:00:01</address>
+            <address>00:00:00:00:00:02</address>
           </ethernet-destination>
         </ethernet-match>
       </match>
@@ -272,15 +272,15 @@
               <type
                 xmlns:ianaift="urn:ietf:params:xml:ns:yang:iana-if-type">ianaift:ethernetCsmacd</type>
               <ethernet-like xmlns="urn:ietf:params:xml:ns:yang:ietf-interfaces-ethernet-like">
-                <mac-address>00:00:00:00:00:00</mac-address>
+                <mac-address>00:00:00:00:00:01</mac-address>
               </ethernet-like>
             </interface>
           </interfaces>
           <traffic-generator xmlns="urn:omnetpp:summit:2018:xml:ns:yang:traffic-generator">
             <frame-size>1514</frame-size>
             <interframe-gap>12</interframe-gap>
-            <src-address>00:00:00:00:00:00</src-address>
-            <dst-address>00:00:00:00:00:02</dst-address>
+            <src-address>00:00:00:00:00:01</src-address>
+            <dst-address>00:00:00:00:00:03</dst-address>
           </traffic-generator>
         </config>
 
@@ -299,7 +299,7 @@
               <type
                 xmlns:ianaift="urn:ietf:params:xml:ns:yang:iana-if-type">ianaift:ethernetCsmacd</type>
               <ethernet-like xmlns="urn:ietf:params:xml:ns:yang:ietf-interfaces-ethernet-like">
-                <mac-address>00:00:00:00:00:01</mac-address>
+                <mac-address>00:00:00:00:00:02</mac-address>
               </ethernet-like>
             </interface>
           </interfaces>
@@ -326,7 +326,7 @@
               <type
                 xmlns:ianaift="urn:ietf:params:xml:ns:yang:iana-if-type">ianaift:ethernetCsmacd</type>
               <ethernet-like xmlns="urn:ietf:params:xml:ns:yang:ietf-interfaces-ethernet-like">
-                <mac-address>00:00:00:00:00:02</mac-address>
+                <mac-address>00:00:00:00:00:03</mac-address>
               </ethernet-like>
             </interface>
           </interfaces>
